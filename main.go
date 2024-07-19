@@ -37,7 +37,7 @@ func createHolden(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	stmt, err := db.Prepare("INSERT INTO holdens (name, age, height) VALUES (?, ?, ?)")
+	stmt, err := db.Prepare(insertQuery)
 	if err != nil {
 		internalServerError(w, err)
 		return

@@ -9,5 +9,5 @@ const CreateTable string = `
   );
 `
 const getQuery string = "SELECT * FROM holdens WHERE id = ?"
-
 const getAllQuery string = "SELECT * FROM holdens"
+const insertQuery string = "INSERT INTO holdens (name, age, height) VALUES (?, ?, ?)"
