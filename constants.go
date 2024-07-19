@@ -8,3 +8,6 @@ const CreateTable string = `
 		height REAL
   );
 `
+const getQuery string = "SELECT * FROM holdens WHERE id = ?"
+
+const getAllQuery string = "SELECT * FROM holdens"

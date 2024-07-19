@@ -61,13 +61,13 @@ func createHolden(w http.ResponseWriter, r *http.Request) {
 }
 
 func getHolden(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
 	var holden Holden
-	row := db.QueryRow("SELECT id, name, age, height FROM holdens WHERE id = ?", id)
+	id := r.PathValue("id")
+	row := db.QueryRow(getQuery, id)
 	err := row.Scan(&holden.ID, &holden.Name, &holden.Age, &holden.Height)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			http.Error(w, "Item not found", http.StatusNotFound)
+			http.Error(w, fmt.Sprintf("Holden %v not found", id), http.StatusNotFound)
 		} else {
 			internalServerError(w, err)
 		}
@@ -82,16 +82,43 @@ func getHolden(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func internalServerError(w http.ResponseWriter, err error) {
-	http.Error(w, err.Error(), http.StatusInternalServerError)
+func getAllHoldens(w http.ResponseWriter, _ *http.Request) {
+	rows, err := db.Query(getAllQuery)
+	if err != nil {
+		internalServerError(w, err)
+	}
+	var holdens []Holden
+	for rows.Next() {
+		var holden Holden
+		if err = rows.Scan(&holden.ID, &holden.Name, &holden.Age, &holden.Height); err != nil {
+			internalServerError(w, err)
+		}
+		holdens = append(holdens, holden)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "No Holdens in DB", http.StatusNotFound)
+			} else {
+				internalServerError(w, err)
+			}
+			return
+		}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(holdens)
+	if err != nil {
+		internalServerError(w, err)
+		return
+	}
 }
 
 func main() {
 	initDB()
 	defer db.Close()
 
-	http.HandleFunc("/create", createHolden)
-	http.HandleFunc("/get", getHolden)
+	http.HandleFunc("POST /holden", createHolden)
+	http.HandleFunc("GET /holden", getAllHoldens)
+	http.HandleFunc("GET /holden/{id}", getHolden)
 
 	fmt.Printf("Starting server at port 8080\n")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
