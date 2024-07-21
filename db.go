@@ -24,8 +24,7 @@ func InitDB(driverName string, databaseName string, tableCreate string) *sql.DB 
 }
 
 func GetOne[T any](db *sql.DB, query string, params ...interface{}) (*T, error) {
-	row := db.QueryRow(query, params...)
-	return getOne[T](row)
+	return getOne[T](db.QueryRow(query, params...))
 }
 
 func GetList[T any](db *sql.DB, query string, params ...interface{}) ([]*T, error) {
