@@ -24,7 +24,7 @@ func InitDB(driverName string, databaseName string, tableCreate string) *sql.DB 
 }
 
 func GetOne[T any](db *sql.DB, query string, params ...interface{}) (*T, error) {
-	return getOne[T](db.QueryRow(query, params...))
+	return scanStruct[T](db.QueryRow(query, params...))
 }
 
 func GetList[T any](db *sql.DB, query string, params ...interface{}) ([]*T, error) {
@@ -34,7 +34,7 @@ func GetList[T any](db *sql.DB, query string, params ...interface{}) ([]*T, erro
 	}
 	var results []*T
 	for rows.Next() {
-		res, rowErr := getOne[T](rows)
+		res, rowErr := scanStruct[T](rows)
 		if rowErr != nil {
 			return nil, rowErr
 		}
@@ -43,7 +43,7 @@ func GetList[T any](db *sql.DB, query string, params ...interface{}) ([]*T, erro
 	return results, nil
 }
 
-func getOne[T any](scanner RowScanner) (*T, error) {
+func scanStruct[T any](scanner RowScanner) (*T, error) {
 	// Get the type of the generic parameter T
 	elemType := reflect.TypeOf((*T)(nil)).Elem()
 	elem := reflect.New(elemType).Elem()
