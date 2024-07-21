@@ -1,11 +1,28 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"net/http"
+)
+
+var db *sql.DB
+
+const (
+	createTable string = `
+	CREATE TABLE IF NOT EXISTS holdens (
+		id 		INTEGER PRIMARY KEY AUTOINCREMENT,
+  		name 	TEXT,
+    	age 	INTEGER,
+		height 	REAL
+  	);
+	`
+	getQuery    string = "SELECT * FROM holdens WHERE id = ?"
+	getAllQuery string = "SELECT * FROM holdens"
+	insertQuery string = "INSERT INTO holdens (name, age, height) VALUES (?, ?, ?)"
 )
 
 type Holden struct {
@@ -46,7 +63,7 @@ func createHolden(w http.ResponseWriter, r *http.Request) {
 }
 
 func getHolden(w http.ResponseWriter, r *http.Request) {
-	holden, err := get[Holden](db, getQuery, r.PathValue("id"))
+	holden, err := GetOne[Holden](db, getQuery, r.PathValue("id"))
 	if err != nil {
 		internalServerError(w, err)
 		return
@@ -55,7 +72,7 @@ func getHolden(w http.ResponseWriter, r *http.Request) {
 }
 
 func getAllHoldens(w http.ResponseWriter, _ *http.Request) {
-	holdens, err := getList[Holden](db, getAllQuery)
+	holdens, err := GetList[Holden](db, getAllQuery)
 	if err != nil {
 		internalServerError(w, err)
 		return
@@ -74,6 +91,9 @@ func writeResponse(w http.ResponseWriter, err error, responseBody any) {
 }
 
 func main() {
+	fmt.Printf("SQLite3 database initializing\n")
+	db = InitDB("sqlite3", "./holden.db", createTable)
+
 	http.HandleFunc("POST /holden", createHolden)
 	http.HandleFunc("GET /holden", getAllHoldens)
 	http.HandleFunc("GET /holden/{id}", getHolden)

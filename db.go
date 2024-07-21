@@ -7,33 +7,19 @@ import (
 	"reflect"
 )
 
-const CreateTable string = `
-	CREATE TABLE IF NOT EXISTS holdens (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-  		name TEXT,
-    	age INTEGER,
-		height REAL
-  );
-`
-const getQuery string = "SELECT * FROM holdens WHERE id = ?"
-const getAllQuery string = "SELECT * FROM holdens"
-const insertQuery string = "INSERT INTO holdens (name, age, height) VALUES (?, ?, ?)"
-
-var db *sql.DB
-
-func initDB(driverName string, databaseName string) {
-	var err error
-	db, err = sql.Open(driverName, databaseName)
+func InitDB(driverName string, databaseName string, tableCreate string) *sql.DB {
+	val, err := sql.Open(driverName, databaseName)
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = db.Exec(CreateTable)
+	_, err = val.Exec(tableCreate)
 	if err != nil {
 		log.Fatal(err)
 	}
+	return val
 }
 
-func get[T any](db *sql.DB, query string, params ...interface{}) (*T, error) {
+func GetOne[T any](db *sql.DB, query string, params ...interface{}) (*T, error) {
 	row := db.QueryRow(query, params...)
 
 	// Get the type of the generic parameter T
@@ -69,7 +55,7 @@ func get[T any](db *sql.DB, query string, params ...interface{}) (*T, error) {
 	return result, nil
 }
 
-func getList[T any](db *sql.DB, query string) ([]T, error) {
+func GetList[T any](db *sql.DB, query string) ([]T, error) {
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -119,8 +105,4 @@ func getList[T any](db *sql.DB, query string) ([]T, error) {
 	}
 
 	return results, nil
-}
-
-func init() {
-	initDB("sqlite3", "./holden.db")
 }
